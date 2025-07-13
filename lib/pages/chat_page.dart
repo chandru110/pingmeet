@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_sound/public/flutter_sound_recorder.dart';
 import 'package:intl/intl.dart' show DateFormat;
+import 'package:permission_handler/permission_handler.dart';
 import 'package:pingmeet/Services/database.dart';
 import 'package:pingmeet/Services/shared_pref.dart';
 import 'package:random_string/random_string.dart';
@@ -19,6 +21,7 @@ class ChatPage extends StatefulWidget {
 }
 
 class _ChatPageState extends State<ChatPage> {
+  Stream? messagestream;
   TextEditingController messagecontroller = TextEditingController();
   String? myusername, myname, myemail, mypic, chatroomid, messageid;
   getsharedpref() async {
@@ -33,7 +36,7 @@ class _ChatPageState extends State<ChatPage> {
   @override
   void initState() {
     // TODO: implement initState
-    getsharedpref();
+    onhold();
     super.initState();
   }
 
@@ -43,6 +46,73 @@ class _ChatPageState extends State<ChatPage> {
     } else {
       return "${a}_$b";
     }
+  }
+
+  Widget chatmessagetile(String message, bool sendbyme) {
+    return Row(
+      mainAxisAlignment: sendbyme
+          ? MainAxisAlignment.end
+          : MainAxisAlignment.start,
+      children: [
+        Flexible(
+          child: Container(
+            padding: EdgeInsets.all(7),
+            decoration: BoxDecoration(
+              color: sendbyme ? Colors.grey : Colors.blue,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(33),
+                topRight: Radius.circular(30),
+                bottomRight: sendbyme
+                    ? Radius.circular(0)
+                    : Radius.circular(30),
+                bottomLeft: sendbyme ? Radius.circular(30) : Radius.circular(0),
+              ),
+            ),
+            child: Text(
+              message,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ),
+        SizedBox(height: 10),
+      ],
+    );
+  }
+
+  onhold() async {
+    await getsharedpref();
+    await getandsetmessgae();
+  }
+
+  getandsetmessgae() async {
+    messagestream = await DatabaseMethods().getchatmessage(chatroomid);
+    setState(() {});
+  }
+
+  Widget chatroommessage() {
+    return StreamBuilder(
+      stream: messagestream,
+      builder: (context, AsyncSnapshot snapshot) {
+        return snapshot.hasData
+            ? ListView.builder(
+                reverse: true,
+                itemBuilder: (context, index) {
+                  DocumentSnapshot ds = snapshot.data.docs[index];
+                  return chatmessagetile(
+                    ds["message"],
+                    myusername == ds["sendby"],
+                  );
+                },
+                itemCount: snapshot.data.docs.length,
+              )
+            : Container();
+      },
+    );
   }
 
   Future addMessage(bool sendbuttonclicked) async {
@@ -84,6 +154,7 @@ class _ChatPageState extends State<ChatPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       backgroundColor: Color(0xff703eff),
       body: Container(
         margin: EdgeInsets.only(top: 40),
@@ -104,7 +175,7 @@ class _ChatPageState extends State<ChatPage> {
                   ),
                   SizedBox(width: MediaQuery.of(context).size.width / 5),
                   Text(
-                    "chandru",
+                    widget.name,
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: const Color.fromARGB(187, 255, 255, 255),
@@ -129,73 +200,11 @@ class _ChatPageState extends State<ChatPage> {
                 ),
                 child: Column(
                   children: [
-                    SizedBox(height: 30),
-                    Row(
-                      children: [
-                        Container(
-                          padding: EdgeInsets.all(7),
-                          decoration: BoxDecoration(
-                            color: Colors.blue,
-                            borderRadius: BorderRadius.only(
-                              topLeft: Radius.circular(33),
-                              topRight: Radius.circular(30),
-                              bottomRight: Radius.circular(30),
-                            ),
-                          ),
-                          child: Text(
-                            "Hi, how are you?",
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 20,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 15),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        Container(
-                          padding: EdgeInsets.all(7),
-                          decoration: BoxDecoration(
-                            color: Colors.grey,
-                            borderRadius: BorderRadius.only(
-                              topLeft: Radius.circular(33),
-                              topRight: Radius.circular(30),
-                              bottomLeft: Radius.circular(30),
-                            ),
-                          ),
-                          child: Text(
-                            "Hey im good wbu?",
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 20,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: MediaQuery.of(context).size.height / 1.6),
+                    Expanded(child: chatroommessage()),
+
                     Container(
                       child: Row(
                         children: [
-                          Container(
-                            padding: EdgeInsets.all(7),
-                            decoration: BoxDecoration(
-                              color: Color(0xff703eff),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Icon(
-                              Icons.mic,
-                              color: Colors.white,
-                              size: 30,
-                            ),
-                          ),
                           SizedBox(width: 5),
                           Expanded(
                             child: Container(
@@ -210,7 +219,6 @@ class _ChatPageState extends State<ChatPage> {
                                 decoration: InputDecoration(
                                   border: InputBorder.none,
                                   hintText: "Write a message...",
-                                  suffixIcon: Icon(Icons.attach_file),
                                 ),
                               ),
                             ),
@@ -236,6 +244,7 @@ class _ChatPageState extends State<ChatPage> {
                         ],
                       ),
                     ),
+                    SizedBox(height: 40),
                   ],
                 ),
               ),

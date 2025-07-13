@@ -82,4 +82,9 @@ class Authmethods {
       );
     });
   }
+
+  Future Signout() async {
+    await GoogleSignIn().signOut();
+    await FirebaseAuth.instance.signOut();
+  }
 }
