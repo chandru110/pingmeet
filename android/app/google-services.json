@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "274658383295",
+    "project_id": "pingmeet-e5822",
+    "storage_bucket": "pingmeet-e5822.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:274658383295:android:8c41beb9df67ab726dfd0a",
+        "android_client_info": {
+          "package_name": "com.example.pingmeet"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA2o_TrWkCuRjK619IZHsquhbSq9a9PVxQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
